@@ -16,6 +16,8 @@ maxVMs = 500
 maxNICs = 10
 
 
+
+
 class Vm:
     """
     The VM class represent 1 qemu/KVM VM with its Network Interface Cards
@@ -23,12 +25,12 @@ class Vm:
     
     Args:
         name (str): The VM name.
-        nics (int): Quantity of MAC addresses (= Quantity of NICs).
+        nics (int): Quantity of MAC addresses (= Quantity of NICs) per VM.
 
     Attributes:
         name (str): The VM name.
-        nics (int): Quantity of MAC addresses (= Quantity of NICs).
-        list_nics (:obj:`list` of :obj:`str`): List of all MAC addresses for all NICs.
+        nics (int): Quantity of MAC addresses (= Quantity of NICs) per VM.
+        list_nics (:obj:`list` of :obj:`str`): List of all MAC addresses for all NICs for 1 VM.
         
     """
 
@@ -41,6 +43,7 @@ class Vm:
     def addMac(self, mac):
         self.list_nics.append(mac) 
 
+
     def delMac(self, mac):
         self.list_nics.remove(mac)
 
@@ -49,7 +52,8 @@ class Vm:
         print ("\n" + self.name)
         for i in range(0, self.nics):
             print ("\n".join(self.list_nics))
-    
+
+
     def showVmDhcpXmlOneItf(self, itf):
         """
         Display an xml line for libvirt's network bridge configuration file 
@@ -62,6 +66,7 @@ class Vm:
 
         Args:
             itf (int): the location of the itf^th NIC in the list.
+
         """
         if itf < self.nics:
             print ("<host mac=\"" + self.list_nics[itf] + "\"" +
@@ -74,19 +79,31 @@ class Vm:
 
 
 
+
+
+
+
+
+
 class Maclist:
     """
-    Maclist is a dictionnary of Vm. Given a number of VMs and the quatity of
-    NICs per VM, Maclist creates a list of MAC addresses for all the VMs.
+    Given a number of VMs and the quatity of NICs per VM, Maclist creates a 
+    list of unique MAC addresses for all the VMs.
+
+    The MAC addresses are derived from a 3 bytes long prefix.
 
     Args:
         vm_qtt (int): The quantity of VM needed.
         nics (int): Quantity of MAC addresses (= Quantity of NICs) per VM.
+        prefix (str): 3 bytes long MAC address prefix.
 
     Attributes:
         vm_qtt (int): The quantity of VM needed.
         nics (int): Quantity of MAC addresses (= Quantity of NICs) per VM.
-        list_nics (:obj:`list` of :obj:`str`): List of all MAC addresses for all NICs.
+        prefix (str): 3 bytes long MAC address prefix.
+        list_nics (:obj:`list` of :obj:`str`): List of all unique MAC addresses for all NICs.
+        vms (:obj:`list` of :obj:`Vm`): List of all VMs
+
     """
 
     def __init__(self, vm_qtt, nics, prefix):
@@ -101,17 +118,25 @@ class Maclist:
     def randomMacGen(self):
         """
         Generate 1 random MAC address with the given 3 bytes prefix.
-        Args:
-            prefix (str): The 3 bytes long MAC address prefix.
         """
         return (self.prefix + ":%02x:%02x:%02x" % (random.randint(0, 255), 
                                                    random.randint(0, 255), 
                                                    random.randint(0, 255)))
+
+    
     def addVm(self, name):
+        """
+        Create a VM, and adds it to the list of VMs.
+        
+        Args:
+            name (str): name of the VM.
+        """
         self.vms.append(Vm(name, self.nics))
+
 
     def buildMacList(self):
         """
+        Create a list of unique MAC addresses.
         """
         totalMac = self.vm_qtt*self.nics 
         i=0
@@ -121,8 +146,10 @@ class Maclist:
                 self.maclist.append(macbuffer)
                 i=i+1
 
+
     def populateVm(self):
         """
+        Assign MAC addresses to each NICs of each VMs.
         """
         macCount = 0
         while macCount < self.vm_qtt*self.nics: 
@@ -148,20 +175,38 @@ class Maclist:
             print ("\n VM #%03s" % vmCount)
             print ("\n".join(self.maclist[i:i+self.nics]))
             vmCount=vmCount + 1
-        print ("\nEOF")
+        print ("\n \n End of MAC addresses list for %03s VMs "
+               "with %02s NICs per VM." % (self.vm_qtt, self.nics))
+        print ("#######################################"
+               "########################################")
+
 
     def displayAllVms(self):
-        print ("\n \n XML config for each NIC, i.e. for each network bridge:")
+        print ("\n \n XML config for each VM:")
         for i in range(0, self.vm_qtt):
+            print ("\n  VM number %02s" % (i+1))
             self.vms[i].showVmDhcpXmlAllItf()
+        print ("\n \n End of XML config for each VM")
+        print ("#######################################"
+               "########################################")
 
 
     def displayAllMacPerItf(self):
-        print ("\n \n XML config for each NIC, i.e. for each network bridge:")
+        print ("\n \n Libvirt XML config for each NIC, "
+               "i.e. for each libvirt network bridge:")
         for i in range(0, self.nics):
             print ("\n  Bridge/NIC number %02s" % (i+1))
             for j in range(0, self.vm_qtt):
                 self.vms[j].showVmDhcpXmlOneItf(i)
+        print ("\n \n End of Libvirt XML config for each NIC, "
+               "i.e. for each libvirt network bridge:")
+        print ("#######################################"
+               "########################################")
+
+
+
+
+
 
 
 def main():
