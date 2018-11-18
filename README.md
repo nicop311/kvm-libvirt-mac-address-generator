@@ -47,3 +47,18 @@ virt-install \
 Now you can use the script to create a list of unique MAC addresses
 for your VMs and you can customize your DHCP and network bridge setup
 with static entries.
+
+Below is an example of KVM network bridges XML descriptor:
+you can put your MAC addresses in here. Then you create your VMs.
+
+```bash
+<ip address="192.168.122.1" netmask="255.255.255.0" localPtr="yes">
+  <dhcp>
+    <range start="192.168.122.100" end="192.168.122.254"/>
+    <host mac="00:16:3e:77:e2:ed" name="foo.example.com" ip="192.168.122.10"/>
+    <host mac="00:16:3e:3e:a9:1a" name="bar.example.com" ip="192.168.122.11"/>
+  </dhcp>
+</ip>
+```
+
+Source: https://libvirt.org/formatnetwork.html
