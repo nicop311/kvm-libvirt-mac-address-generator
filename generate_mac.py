@@ -109,6 +109,7 @@ class Maclist:
         prefix (str): 3 bytes long MAC address prefix.
         list_nics (:obj:`list` of :obj:`str`): List of all unique MAC addresses for all NICs.
         vms (:obj:`list` of :obj:`Vm`): List of all VMs
+        datetime (str): Time and date of MAC address list generation.
 
     """
 
