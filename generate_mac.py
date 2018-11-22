@@ -1,6 +1,11 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+# File              : generate_mac.py
+# Author            : nicop311
+# Date              : 19.11.2018
+# Last Modified Date: 19.11.2018
+#
+#
 # Run this script:
 #   $ ./generate_mac.py
 #   $ ./generate_mac.py -p aa:bb:cc -n 3 -i 4
@@ -47,7 +52,8 @@ class Vm:
     def delMac(self, mac):
         self.list_nics.remove(mac)
 
-
+    
+    # TODO: must modify showVm
     def showVm(self):
         print ("\n" + self.name)
         for i in range(0, self.nics):
@@ -113,6 +119,14 @@ class Maclist:
 
         self.maclist = []
         self.vms = []
+        now = datetime.datetime.now()
+        self.datetime = now.strftime("%Y-%m-%d %H:%M:%S")
+
+
+    def printTimeDateHeader(self):
+        print ("\n#######################################"
+        "########################################")
+        print ("MAC Address list generated on: " + self.datetime)
 
 
     def randomMacGen(self):
@@ -154,22 +168,33 @@ class Maclist:
         macCount = 0
         while macCount < self.vm_qtt*self.nics: 
             for i in range(0,self.vm_qtt):
-                self.addVm("VM %s" % (i+1))
+                self.addVm("VM #%03s" % (i+1))
                 for j in range(0, self.nics):
                     self.vms[i].addMac(self.maclist[macCount])
                     macCount = macCount + 1
 
 
-    def displayAllMac(self):
+    def displayAllMacPerVm(self):
         """
-        Displays the MAC address list in terminal.
+        Displays only the MAC address list in terminal per VMs.
+
+        Example:
+             VM #  1
+            aa:bb:cc:c9:a2:8b
+            aa:bb:cc:81:d5:d3
+            aa:bb:cc:fc:b0:fd
+            aa:bb:cc:91:e7:83
+             
+             VM #  2
+            aa:bb:cc:3c:b6:19
+            aa:bb:cc:32:81:00
+            aa:bb:cc:ef:30:18
+            aa:bb:cc:03:44:8e
         """
         vmCount=1
-        print ()
-        now = datetime.datetime.now()
-        print ("MAC addresses list for %03s VMs "
+        self.printTimeDateHeader()
+        print ("\n \nMAC addresses list for %03s VMs "
                "with %02s NICs per VM." % (self.vm_qtt, self.nics))
-        print (now.strftime("%Y-%m-%d %H:%M:%S"))
 
         for i in range(0, len(self.maclist), self.nics):
             print ("\n VM #%03s" % vmCount)
@@ -181,17 +206,78 @@ class Maclist:
                "########################################")
 
 
-    def displayAllVms(self):
-        print ("\n \n XML config for each VM:")
+    # TODO: use the method "showVm" to simplify
+    def displayAllXmlMacPerVM(self):
+        """
+        Shows the XML libvirt network static DHCP entries configuration
+        per VMs.
+
+        Example:
+              VM #  1
+            <host mac="aa:bb:cc:c9:a2:8b" name="VM #  1" ip="x.x.x.x"/>
+            <host mac="aa:bb:cc:81:d5:d3" name="VM #  1" ip="x.x.x.x"/>
+            <host mac="aa:bb:cc:fc:b0:fd" name="VM #  1" ip="x.x.x.x"/>
+            <host mac="aa:bb:cc:91:e7:83" name="VM #  1" ip="x.x.x.x"/>
+    
+              VM #  2
+            <host mac="aa:bb:cc:3c:b6:19" name="VM #  2" ip="x.x.x.x"/>
+            <host mac="aa:bb:cc:32:81:00" name="VM #  2" ip="x.x.x.x"/>
+            <host mac="aa:bb:cc:ef:30:18" name="VM #  2" ip="x.x.x.x"/>
+            <host mac="aa:bb:cc:03:44:8e" name="VM #  2" ip="x.x.x.x"/>
+
+        """
+        self.printTimeDateHeader()
+        print ("\n \n Libvirt XML config for each VM:")
         for i in range(0, self.vm_qtt):
-            print ("\n  VM number %02s" % (i+1))
+            print ("\n  VM #%03s" % (i+1))
             self.vms[i].showVmDhcpXmlAllItf()
-        print ("\n \n End of XML config for each VM")
+        print ("\n \n End of Libvirt XML config for each VM")
         print ("#######################################"
                "########################################")
 
 
     def displayAllMacPerItf(self):
+        """
+        Displays only the MAC address list in terminal per NIC interface,
+        i.e. per bridge.
+
+        """
+        self.printTimeDateHeader()
+        print ("\n \n Displays the MAC address list per NIC, "
+               "i.e. for each libvirt network bridge:")
+        for i in range(0, self.nics):
+            print ("\n  Bridge/NIC number %02s" % (i+1))
+            for j in range(0, self.vm_qtt):
+                print (self.vms[j].list_nics[i])
+        print ("\n \n End of Displays the MAC address list per NIC ")
+        print ("#######################################"
+               "########################################")
+
+
+    def displayAllXmlMacPerItf(self):
+        """
+        Shows the XML libvirt network static DHCP entries configuration
+        per NIC interfaces, i.e. per network bridge.
+
+        Example:
+          Bridge/NIC number  1
+            <host mac="aa:bb:cc:c9:a2:8b" name="VM #  1" ip="x.x.x.x"/>
+            <host mac="aa:bb:cc:3c:b6:19" name="VM #  2" ip="x.x.x.x"/>
+            
+              Bridge/NIC number  2
+            <host mac="aa:bb:cc:81:d5:d3" name="VM #  1" ip="x.x.x.x"/>
+            <host mac="aa:bb:cc:32:81:00" name="VM #  2" ip="x.x.x.x"/>
+            
+              Bridge/NIC number  3
+            <host mac="aa:bb:cc:fc:b0:fd" name="VM #  1" ip="x.x.x.x"/>
+            <host mac="aa:bb:cc:ef:30:18" name="VM #  2" ip="x.x.x.x"/>
+            
+              Bridge/NIC number  4
+            <host mac="aa:bb:cc:91:e7:83" name="VM #  1" ip="x.x.x.x"/>
+            <host mac="aa:bb:cc:03:44:8e" name="VM #  2" ip="x.x.x.x"/>
+
+        """
+        self.printTimeDateHeader()
         print ("\n \n Libvirt XML config for each NIC, "
                "i.e. for each libvirt network bridge:")
         for i in range(0, self.nics):
@@ -211,19 +297,27 @@ class Maclist:
 
 def main():
     parser = argparse.ArgumentParser(description="Generate a list of random "
-                                     "and unique MAC addresses for all your "
-                                     "VMs. The MAC addresses are derived from "
-                                     "a given prefix XX:XX:XX (the first 3 "
-                                     "bytes) pattern."
-                                     " "
-                                     "This is useful when you want to create "
-                                     "VMs with a libvirt/KVM tool such as " 
-                                     "virt-install and set 'static' MAC "
-                                     "addresses to configure a DHCP server "
-                                     "for these VMs.")
+                        "and unique MAC addresses for all your "
+                        "VMs.\nThe MAC addresses are derived from "
+                        "a given prefix XX:XX:XX (the \nfirst 3 "
+                        "bytes) pattern."
+                        " \n \n"
+                        "This is useful when you want to create "
+                        "VMs with a libvirt/KVM tool \nsuch as " 
+                        "`virt-install` and set `static` MAC "
+                        "addresses to configure \na DHCP server "
+                        "for these VMs.\n \n"
+                        "Run this script:\n"
+                        "  $ ./generate_mac.py\n"
+                        "  $ ./generate_mac.py -p aa:bb:cc -n 3 -i 4\n \n"
+                        "Get help:\n"
+                        "  $ ./generate_mac.py -h\n",
+                        formatter_class=argparse.RawTextHelpFormatter)
+
+
     parser.add_argument("-p","--prefix",
-                        help="Choose MAC address prefix (3 bytes) patern. "
-                        "Format is xx:xx:xx where x is hex value (0 to f). "
+                        help="Choose MAC address prefix (3 bytes) patern.\n"
+                        "Format is xx:xx:xx where x is hex value (0 to f).\n"
                         "Default is aa:aa:aa.",
                         default="aa:aa:aa")
     parser.add_argument("-n","--number",
@@ -254,19 +348,20 @@ def main():
         parser.error("Maximum number of NICs per VM is %s." % maxNICs)
     
     # Create the MAC address list and displays it in terminal
-#    vm1 = Vm("maVM1", args.interface)
-#    vm1.showVm()
-#    vm1.addMac("OSEF")
-#    vm1.addMac("OSEF")
-#    vm1.showVm()
-#    vm1.showVmDhcpXmlOneItf(0)
+    # vm1 = Vm("maVM1", args.interface)
+    # vm1.showVm()
+    # vm1.addMac("OSEF")
+    # vm1.addMac("OSEF")
+    # vm1.showVm()
+    # vm1.showVmDhcpXmlOneItf(0)
     
     list1 = Maclist(args.number, args.interface, args.prefix)
     list1.buildMacList()
     list1.populateVm()
-    list1.displayAllMac()
-#    list1.displayAllVms()
+    list1.displayAllMacPerVm()
+    list1.displayAllXmlMacPerVM()
     list1.displayAllMacPerItf()
+    list1.displayAllXmlMacPerItf()
 
 if __name__=="__main__":
     main()
